@@ -157,7 +157,79 @@ The gRPC client project requires the following NuGet packages:
 12. Create a Protos folder in the gRPC client project.
     ```
     cd GrpcGreeterClient
+    mkdir Protos
     ```
+13. Copy the Protos\greet.proto file from the **GrpcGreeterClient** to the **Protos** folder in the gRPC client project.
+14. Update the **namespace** inside the **greet.proto** file to the project's namespace:
+    ```
+    option csharp_namespace = "GrpcGreeterClient";
+    ```
+15. Edit the **GrpcGreeterClient.csproj** project file, add an item group with a <Protobuf> element that refers to the greet.proto file:
+    ```
+    <ItemGroup>
+        <Protobuf Include="Protos\greet.proto" GrpcServices="Client" />
+    </ItemGroup>
+    ```
+#### Create the Greeter client
+16. Build the client project to create the types in the GrpcGreeterClient namespace.
+
+The GrpcGreeterClient types are generated automatically by the build process. The tooling package Grpc.Tools generates the following files based on the greet.proto file:
+- **GrpcGreeterClient\obj\Debug\[TARGET_FRAMEWORK]\Protos\Greet.cs**: The protocol buffer code which populates, serializes and retrieves the request and response message types.
+- **GrpcGreeterClient\obj\Debug\[TARGET_FRAMEWORK]\Protos\GreetGrpc.cs**: Contains the generated client classes.
+17. Update the gRPC client **Program.cs** file with the following code.
+    ```
+    using Grpc.Net.Client;
+    using GrpcGreeterClient;
+
+    // The port number must match the port of the gRPC server.
+    using var channel = GrpcChannel.ForAddress("https://localhost:7042");
+    var client = new Greeter.GreeterClient(channel);
+    var reply = await client.SayHelloAsync(
+        new HelloRequest { Name = "GreeterClient" });
+    Console.WriteLine("Greeting: " + reply.Message);
+    Console.WriteLine("Press any key to exit...");
+    Console.ReadKey();
+    ```
+- In the preceding highlighted code, replace the localhost **port** number 5204 with the HTTPS **port** number specified in **Properties/launchSettings.json** within the GrpcGreeter service project.
+    ```
+    using Grpc.Net.Client;
+    using GrpcGreeterClient;
+
+    // The port number must match the port of the gRPC server.
+    using var channel = GrpcChannel.ForAddress("http://localhost:5204");
+    var client = new Greeter.GreeterClient(channel);
+    var reply = await client.SayHelloAsync(new HelloRequest { Name = "GreeterClient" });
+    Console.WriteLine("Greeting: " + reply.Message);
+    Console.WriteLine("Press any key to exit...");
+    Console.ReadKey();
+    ```
+- **Program.cs** contains the entry point and logic for the gRPC client.
+The Greeter client is created by:
+- Instantiating a **GrpcChannel** containing the information for creating the connection to the gRPC service.
+- Using the **GrpcChannel** to construct the Greeter client:
+#### Update the appsettings.Development.json file by adding the following highlighted lines:
+18. Test the gRPC client with the gRPC Greeter service
+    ```
+    {
+        "Logging": {
+            "LogLevel": {
+            "Default": "Information",
+            "Microsoft.AspNetCore": "Warning",
+            "Microsoft.AspNetCore.Hosting": "Information",
+            "Microsoft.AspNetCore.Routing.EndpointMiddleware": "Information"
+            }
+        }
+    }
+    ```
+- Start the Greeter service.
+- Start the client.
+The client sends a greeting to the service with a message containing its name, GreeterClient. The service sends the message "Hello GreeterClient" as a response. The "Hello GreeterClient" response is displayed in the command prompt:
+    ```
+    Greeting: Hello GreeterClient
+    Press any key to exit...
+    ```
+19. 
+
 
 
 #### Reference: 
